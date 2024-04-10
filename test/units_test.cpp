@@ -4,16 +4,14 @@
 #include "thread/threadpool.h"
 #include "minilog/minilog.h"
 #include <thread>
-#include <thread>
 
 void test(int k) {
     for (int i = 0; i < 10000; i++) {
         ThreadPool::instance().commit(
-            [&](int a) {
+            [](int a) {
                 minilog::log_info(
                     "num: {} ,thread {}", a,
                     std::hash<std::thread::id>{}(std::this_thread::get_id()));
-                if (a == 9999) { minilog::log_warn("all commit"); }
             },
             i);
     }
