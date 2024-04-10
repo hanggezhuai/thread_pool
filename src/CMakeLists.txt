@@ -16,4 +16,4 @@ file(GLOB_RECURSE all_src CONFIGURE_DEPENDS *.cpp)
 add_executable(main ${all_src})
 
 target_include_directories(main PUBLIC ${PROJECT_SOURCE_DIR}/include/)
-target_link_libraries(main PRIVATE Backward::Backward)
+target_link_libraries(main PRIVATE Backward::Backward Backward::Object Backward::Interface)

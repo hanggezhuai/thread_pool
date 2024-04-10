@@ -1,46 +1,32 @@
 #include <doctest/doctest.h>
 #include <nanobench.h>
 
-#include <chrono>
-#include <random>
+#include "thread/threadpool.h"
+#include "minilog/minilog.h"
+#include <thread>
 #include <thread>
 
-// NOLINTNEXTLINE
-TEST_CASE("tutorial_fast_v1") {
-    uint64_t x = 1;
-    ankerl::nanobench::Bench().run("++x", [&]() { ++x; });
+void test(int k) {
+    for (int i = 0; i < 10000; i++) {
+        ThreadPool::instance().commit(
+            [&](int a) {
+                minilog::log_info(
+                    "num: {} ,thread {}", a,
+                    std::hash<std::thread::id>{}(std::this_thread::get_id()));
+                if (a == 9999) { minilog::log_warn("all commit"); }
+            },
+            i);
+    }
+    return;
 }
 
 // NOLINTNEXTLINE
-TEST_CASE("tutorial_fast_v2") {
-    uint64_t x = 1;
-    ankerl::nanobench::Bench().run(
-        "++x", [&]() { ankerl::nanobench::doNotOptimizeAway(x += 1); });
-}
-
-// NOLINTNEXTLINE
-TEST_CASE("tutorial_slow_v1") {
-    ankerl::nanobench::Bench().run("sleep 100ms, auto", [&] {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    });
-}
-
-// NOLINTNEXTLINE
-TEST_CASE("tutorial_slow_v2") {
-    ankerl::nanobench::Bench().epochs(3).run("sleep 100ms", [&] {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    });
-}
-
-// NOLINTNEXTLINE
-TEST_CASE("tutorial_fluctuating_v1") {
-    std::random_device dev;
-    std::mt19937_64 rng(dev());
-    ankerl::nanobench::Bench().run("random fluctuations", [&] {
-        // each run, perform a random number of rng calls
-        auto iterations = rng() & UINT64_C(0xff);
-        for (uint64_t i = 0; i < iterations; ++i) {
-            ankerl::nanobench::doNotOptimizeAway(rng());
+TEST_CASE("thread-pool") {
+    minilog::set_log_level(minilog::log_level::warn);
+    ankerl::nanobench::Bench().run("++x", [&]() {
+        for (int i = 0; i < 10001; i++) {
+            test(i);
+            if (i % 100 == 0) { minilog::log_warn("done{}", i); }
         }
     });
 }
